@@ -3,6 +3,7 @@ const axios = require('axios');
 
 exports.handler = async function (event, context) {
   const { password } = querystring.parse(event.body);
+  const { redirect } = querystring.parse(event.headers.referer.split('?')[1]);
 
   const endpoint = `${process.env.URL}/.netlify/identity/token`;
   const data = querystring.stringify({
@@ -25,7 +26,7 @@ exports.handler = async function (event, context) {
       headers: {
         'Set-Cookie': `nf_jwt=${access_token}; Path=/; HttpOnly; Secure`,
         'Cache-Control': 'no-cache',
-        Location: '/pro/',
+        Location: redirect || '/pro/',
       },
     };
   } catch (error) {
@@ -34,30 +35,8 @@ exports.handler = async function (event, context) {
       statusCode: 302,
       headers: {
         'Cache-Control': 'no-cache',
-        Location: '/login/',
+        Location: `/login/?redirect=${encodeURIComponent(redirect)}`,
       },
     };
   }
-};
-
-// Add this
-const { redirect } = querystring.parse(event.headers.referer.split('?')[1]);
-
-// Change this in the try statement
-return {
-  statusCode: 302,
-  headers: {
-    'Set-Cookie': `nf_jwt=${access_token}; Path=/; HttpOnly; Secure`,
-    'Cache-Control': 'no-cache',
-    Location: redirect || '/pro/',
-  },
-};
-
-// And this in the catch statement
-return {
-  statusCode: 302,
-  headers: {
-    'Cache-Control': 'no-cache',
-    Location: `/login/?redirect=${encodeURIComponent(redirect)}`,
-  },
 };
